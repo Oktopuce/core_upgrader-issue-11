@@ -116,23 +116,26 @@ final class RemoveDuplicateSysCategoryRecordMms implements UpgradeWizardInterfac
     /**
      * Is an update necessary?
      *
-     * Looks for fe plugins in tt_content table to be migrated
-     *
      * @return bool
      * @throws Exception
      */
     public function updateNecessary(): bool
     {
 
+        $connection = GeneralUtility::makeInstance(ConnectionPool::class)->getConnectionForTable('sys_category_record_mm');
 
-        return true;
+        /** @var QueryBuilder $queryBuilder */
+        $queryBuilder = $connection->createQueryBuilder();
+        $statement = $queryBuilder->count('*')
+            ->addSelect('uid_local', 'uid_foreign', 'tablenames', 'fieldname', 'sorting', 'sorting_foreign')
+            ->from('sys_category_record_mm')
+            ->groupBy('uid_local', 'uid_foreign', 'tablenames', 'fieldname')
+            ->having('COUNT(*) > 1')
+            ->executeQuery();
+        return $statement->rowCount() > 0;
     }
 
     /**
-     * Returns an array of class names of Prerequisite classes
-     *
-     * This way a wizard can define dependencies like "database up-to-date" or
-     * "reference index updated"
      *
      * @return string[]
      */
