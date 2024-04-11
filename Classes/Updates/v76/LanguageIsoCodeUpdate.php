@@ -72,7 +72,7 @@ class LanguageIsoCodeUpdate implements UpgradeWizardInterface
             ->executeQuery()
             ->fetchOne();
 
-        return true;
+        return $migratableLanguageRecordsCount > 0;
     }
 
     /**
