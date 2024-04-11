@@ -13,7 +13,10 @@ namespace TYPO3\CMS\v76\Install\Updates;
  *
  * The TYPO3 project - inspiring people to share!
  */
+
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Install\Attribute\UpgradeWizard;
 use TYPO3\CMS\Install\Updates\DatabaseUpdatedPrerequisite;
 use TYPO3\CMS\Install\Updates\UpgradeWizardInterface;
@@ -56,9 +59,20 @@ class LanguageIsoCodeUpdate implements UpgradeWizardInterface
             return false;
         }
 
-        $emptyValue = $this->getDatabaseConnection()->fullQuoteStr('', 'sys_language');
-        $migratableLanguageRecords = $this->getDatabaseConnection()->exec_SELECTcountRows('uid', 'sys_language', 'language_isocode=' . $emptyValue . ' AND CAST(static_lang_isocode AS CHAR) != ' . $emptyValue);
-        return $migratableLanguageRecords !== 0;
+        $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_language');
+
+
+        $migratableLanguageRecordsCount = $queryBuilder
+            ->count('uid')
+            ->from('sys_language')
+            ->where(
+                $queryBuilder->expr()->eq('language_isocode', $queryBuilder->createNamedParameter('')),
+                $queryBuilder->expr()->literal('CAST(static_lang_isocode AS CHAR) != \'\'')
+            )
+            ->executeQuery()
+            ->fetchOne();
+
+        return true;
     }
 
     /**
@@ -80,23 +94,42 @@ class LanguageIsoCodeUpdate implements UpgradeWizardInterface
      */
     public function executeUpdate(): bool
     {
-        $emptyValue =  $this->getDatabaseConnection()->fullQuoteStr('', 'sys_language');
-        $migrateableLanguageRecords = $this->getDatabaseConnection()->exec_SELECTgetRows('uid,static_lang_isocode', 'sys_language', 'language_isocode=' . $emptyValue . ' AND CAST(static_lang_isocode AS CHAR) != ' . $emptyValue);
-        if (!empty($migrateableLanguageRecords)) {
-            foreach ($migrateableLanguageRecords as $languageRecord) {
-                $staticLanguageRecord = $this->getDatabaseConnection()->exec_SELECTgetSingleRow('*', 'static_languages', 'uid=' . (int)$languageRecord['static_lang_isocode']);
-                if (!empty($staticLanguageRecord['lg_iso_2'])) {
-                    $this->getDatabaseConnection()->exec_UPDATEquery(
-                        'sys_language',
-                        'uid=' . (int)$languageRecord['uid'],
-                        [
-                            'language_isocode' => strtolower($staticLanguageRecord['lg_iso_2'])
-                        ]
-                    );
-                }
+        $connectionPool = GeneralUtility::makeInstance(ConnectionPool::class);
+        $queryBuilderSysLanguage = $connectionPool->getQueryBuilderForTable('sys_language');
+
+        $emptyValue = $queryBuilderSysLanguage->createNamedParameter('');
+
+        $migrateableLanguageRecords = $queryBuilderSysLanguage
+            ->select('uid', 'static_lang_isocode')
+            ->from('sys_language')
+            ->where(
+                $queryBuilderSysLanguage->expr()->eq('language_isocode', $emptyValue),
+                $queryBuilderSysLanguage->expr()->literal('CAST(static_lang_isocode AS CHAR) != \'\'')
+            )
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        foreach ($migrateableLanguageRecords as $languageRecord) {
+            $queryBuilderStaticLanguages = $connectionPool->getQueryBuilderForTable('static_languages');
+            $staticLanguageRecord = $queryBuilderStaticLanguages
+                ->select('*')
+                ->from('static_languages')
+                ->where(
+                    $queryBuilderStaticLanguages->expr()->eq('uid', $queryBuilderStaticLanguages->createNamedParameter((int)$languageRecord['static_lang_isocode'], \PDO::PARAM_INT))
+                )
+                ->executeQuery()
+                ->fetchAssociative();
+
+            if (!empty($staticLanguageRecord['lg_iso_2'])) {
+                $connectionPool->getConnectionForTable('sys_language')->update(
+                    'sys_language',
+                    ['language_isocode' => strtolower($staticLanguageRecord['lg_iso_2'])],
+                    ['uid' => (int)$languageRecord['uid']]
+                );
             }
         }
 
         return true;
     }
+
 }
