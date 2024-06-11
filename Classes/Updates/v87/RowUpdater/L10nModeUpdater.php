@@ -19,7 +19,7 @@ use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\DataHandling\DataHandler;
 use TYPO3\CMS\Core\DataHandling\Localization\State;
-use TYPO3\CMS\Core\Localization\LanguageService;
+use TYPO3\CMS\Core\Localization\LanguageServiceFactory;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Core\Versioning\VersionState;
 use TYPO3\CMS\Install\Updates\RowUpdater\RowUpdaterInterface;
@@ -87,7 +87,7 @@ class L10nModeUpdater implements RowUpdaterInterface
         }
 
         if (empty($GLOBALS['LANG'])) {
-            $GLOBALS['LANG'] = GeneralUtility::makeInstance(LanguageService::class);
+            $GLOBALS['LANG'] = GeneralUtility::makeInstance(LanguageServiceFactory::class)->createFromUserPreferences($GLOBALS['BE_USER']);
         }
         if (!empty($GLOBALS['BE_USER'])) {
             $adminUser = $GLOBALS['BE_USER'];
@@ -275,7 +275,9 @@ class L10nModeUpdater implements RowUpdaterInterface
         $statement = $queryBuilder
             ->select(...$selectFieldNames)
             ->andWhere(...$predicates)
-            ->executeQuery();
+            ->executeQuery()
+            ->fetchAllAssociative()
+        ;
 
         $payload = [];
 
