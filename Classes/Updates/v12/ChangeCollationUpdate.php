@@ -129,6 +129,12 @@ final class ChangeCollationUpdate implements UpgradeWizardInterface
             // Change each column collation
             foreach ($table->getColumns() as $column) {
                 if ($column->getType()->getName() === 'string' || $column->getType()->getName() === 'text') {
+
+                    $columnCollation = $this->getColumnCollation($connection, $schemaManager, $tableName, $column->getName());
+                    if ($columnCollation === $this->collate) {
+                        continue;
+                    }
+
                     $columnName = $column->getName();
                     $columnType = $column->getType()->getSQLDeclaration($column->toArray(), $connection->getDatabasePlatform());
 
