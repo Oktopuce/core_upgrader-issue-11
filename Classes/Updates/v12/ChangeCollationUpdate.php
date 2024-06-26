@@ -133,7 +133,7 @@ final class ChangeCollationUpdate implements UpgradeWizardInterface
                     $columnType = $column->getType()->getSQLDeclaration($column->toArray(), $connection->getDatabasePlatform());
 
                     $sql = sprintf(
-                        'ALTER TABLE %s CHANGE %s %s %s COLLATE %s;',
+                        'ALTER TABLE %s CHANGE \'%s\' \'%s\' %s COLLATE %s;',
                         $tableName,
                         $columnName,
                         $columnName,
