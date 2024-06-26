@@ -38,8 +38,8 @@ final class ChangeCollationUpdate implements UpgradeWizardInterface
     public function __construct()
     {
 
-        $this->charset = $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default']['charset'] ?? 'utf8mb4';
-        $this->collate = $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default']['collate'] ?? 'utf8mb4_general_ci';
+        $this->charset = $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default']['tableoptions']['charset'] ?? 'utf8mb4';
+        $this->collate = $GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default']['tableoptions']['collate'] ?? 'utf8mb4_general_ci';
     }
 
 
@@ -66,7 +66,7 @@ final class ChangeCollationUpdate implements UpgradeWizardInterface
 
     public function updateNecessary(): bool
     {
-        if (!isset($GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default']['charset']) || !isset($GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default']['collate'])) {
+        if (!isset($GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default']['tableoptions']['charset']) || !isset($GLOBALS['TYPO3_CONF_VARS']['DB']['Connections']['Default']['tableoptions']['collate'])) {
             return false;
         }
 
