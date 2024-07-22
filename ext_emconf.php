@@ -12,7 +12,7 @@
 
 $EM_CONF['core_upgrader2'] = [
     'title' => 'Core upgrader',
-    'description' => 'Run upgrade wizards for multiple TYPO3 versions at once',
+    'description' => 'Run upgrade wizards for multiple TYPO3 versions at once and clean up the system',
     'category' => 'cli',
     'author' => 'Sven Wappler',
     'author_email' => 'typo3@wappler.systems',
