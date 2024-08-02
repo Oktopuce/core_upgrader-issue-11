@@ -166,6 +166,15 @@ final class RemoveOrphanedSysCategoryMMRecords implements UpgradeWizardInterface
     public function executeUpdate(): bool
     {
 
+        while ($this->updateNecessary()) {
+            $this->doUpdate(100000);
+        }
+
+        return true;
+    }
+
+
+    private function doUpdate($limit) {
 
 
         $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_category_record_mm');
@@ -174,6 +183,7 @@ final class RemoveOrphanedSysCategoryMMRecords implements UpgradeWizardInterface
             ->removeAll();
         $rows = $queryBuilder
             ->select('f.*')
+            ->setMaxResults($limit)
             ->from('sys_category_record_mm','f')
             ->leftJoin(
                 'f',
@@ -292,18 +302,13 @@ final class RemoveOrphanedSysCategoryMMRecords implements UpgradeWizardInterface
 
 
             // 3. remove records that do not have a foreign record
-
-            $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_category_record_mm');
-            $queryBuilder
-                ->getRestrictions()
-                ->removeAll();
-
             $queryBuilder = GeneralUtility::makeInstance(ConnectionPool::class)->getQueryBuilderForTable('sys_category_record_mm');
             $queryBuilder
                 ->getRestrictions()
                 ->removeAll();
             $orphanedForeignRecords = $queryBuilder
                 ->select('f.*')
+                ->setMaxResults($limit)
                 ->from('sys_category_record_mm','f')
                 ->leftJoin(
                     'f',
@@ -352,8 +357,9 @@ final class RemoveOrphanedSysCategoryMMRecords implements UpgradeWizardInterface
 
         }
 
-        return true;
+
     }
+
 
 
     /**
