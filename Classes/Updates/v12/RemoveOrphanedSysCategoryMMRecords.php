@@ -167,7 +167,7 @@ final class RemoveOrphanedSysCategoryMMRecords implements UpgradeWizardInterface
     {
 
         while ($this->updateNecessary()) {
-            $this->doUpdate(100000);
+            $this->doUpdate(10000);
         }
 
         return true;
